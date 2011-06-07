@@ -212,8 +212,8 @@ def make_model(lon,lat,t,input_data,covariate_keys,pos,neg,lo_age,up_age,duffy,c
         try:
             @pm.data
             @pm.stochastic(dtype=np.int)
-            def N_pos_now(value = pm.utils.round_array(pos[this_slice]), splrep = splreps[this_slice], eps_p_f = eps_p_f_now, a1=a1, a2=a2):
-                p_now = pm.flib.stukel_invlogit(eps_p_f, a1, a2)
+            def N_pos_now(value = pm.utils.round_array(pos[this_slice]), splrep = splreps[this_slice], eps_p_f = eps_p_f_now, a1=a1, a2=a2, duffy=duffy[this_slice]):
+                p_now = pm.flib.stukel_invlogit(eps_p_f, a1, a2)*(1.-duffy)
                 out = 0.
                 for i in xrange(len(value)):
                     out += interp.splev(p_now[i], splrep[i])
@@ -229,7 +229,6 @@ def make_model(lon,lat,t,input_data,covariate_keys,pos,neg,lo_age,up_age,duffy,c
         for i in xrange(len(eps_p_f_list)):
             out[chunk*i:min((i+1)*chunk, data_mesh.shape[0])] = eps_p_f_list[i]
         return out
-    
 
     out = locals()
 

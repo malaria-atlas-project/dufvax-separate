@@ -17,8 +17,8 @@ import flikelihood
 from scipy.special import gammaln
 
 a_pred = np.hstack((np.arange(15), np.arange(15,75,5), [100]))
-age_pr_file = tb.openFile('pr-falciparum')
-age_dist_file = tb.openFile('age-dist-falciparum')
+age_pr_file = tb.openFile('age/pr-falciparum')
+age_dist_file = tb.openFile('age/age-dist-falciparum')
 
 age_pr_trace = age_pr_file.root.chain0.PyMCsamples.cols
 age_dist_trace = age_dist_file.root.chain0.PyMCsamples.cols
@@ -52,14 +52,6 @@ non_cov_columns = {'lo_age': 'int', 'up_age': 'int', 'pos': 'float', 'neg': 'flo
 
 # Postprocessing stuff for mapping
 
-def vivax(sp_sub):
-    cmin, cmax = thread_partition_array(sp_sub)
-    out = sp_sub_b.copy('F')     
-    ttf = two_ten_factors[np.random.randint(len(two_ten_factors))]
-    
-    pm.map_noreturn(vivax_postproc, [(out, sp_sub_0, sp_sub_v, p1, ttf, cmin[i], cmax[i]) for i in xrange(len(cmax))])
-    return out
-
 def pr(sp_sub, two_ten_facs=two_ten_factors):
     pr = sp_sub.copy('F')
     pr = invlogit(pr) * two_ten_facs[np.random.randint(len(two_ten_facs))]
@@ -86,37 +78,8 @@ def incidence(sp_sub,
     out[np.where(out==1)]=1-(1e-10)
     return out
 
-# params for naive risk mapping
-r = .1/200
-k = 1./4.2
-ndraws = 100 # from the heterogenous biting parameter CAREFUL! this can bump up mapping time considerably if doing large maps
-trip_duration = 30  # in days
-
-def unexposed_risk_(f):
-    def unexposed_risk(sp_sub, f=f, two_ten_facs=two_ten_factors):
-        pr = sp_sub.copy('F')
-        pr = invlogit(pr)*two_ten_facs[np.random.randint(len(two_ten_facs))]
-
-        pr[np.where(pr==0)]=1e-10
-        pr[np.where(pr==1)]=1-(1e-10)
-
-        gams = pm.rgamma(1./k,1./k,size=ndraws)
-
-        ur = pr*0
-        fac = -r*k*((1-pr)**(-1./k)-1)*trip_duration*f
-        for g in gams:
-            ur += 1-np.exp(fac*g)
-        ur /= len(gams)
-        
-        ur[np.where(ur==0)]=1e-10
-        ur[np.where(ur==1)]=1-(1e-10)
-
-        return ur
-        
-    unexposed_risk.__name__ = 'unexposed_risk_%f'%f
-    return unexposed_risk
-    
 #map_postproc = [pr]+map(unexposed_risk_, [.001, .01, .1, 1.])
+# NOTE: You must multiply all the maps by 1-duffy post-hoc.
 map_postproc=[pr]
 
 # bins_list = [np.array([0,.1,.5,.75,1]),np.array([0,.05,.4,1]),np.array([0,.01,.05,.4,1])]
@@ -158,33 +121,11 @@ def pr(data, a_pred=a_pred, P_trace=P_trace, S_trace=S_trace, F_trace=F_trace):
     obs = data.pos/n.astype('float')
     facs = agecorr.age_corr_factors(data.lo_age, data.up_age, 10000, a_pred, P_trace, S_trace, F_trace).T
     def f(sp_sub, facs=facs, n=n):
-        p=pm.flib.invlogit(sp_sub)*facs[np.random.randint(10000)]
+        p=pm.flib.invlogit(sp_sub)*facs[np.random.randint(10000)]*(1.-data.duffy)
         return np.random.binomial(n.astype('int'),p).astype('float')/n
     return obs, n, f
 
 validate_postproc=[pr]
-
-def simdata_postproc(sp_sub, survey_plan, a_pred=a_pred, P_trace=P_trace, S_trace=S_trace, F_trace=F_trace):
-    """
-    This function should take a value for the Gaussian random field in the submodel 
-    sp_sub, evaluated at the survey plan locations, and return a simulated dataset.
-    """
-    facs = agecorr.age_corr_factors(survey_plan.lo_age, survey_plan.up_age, 1, a_pred, P_trace, S_trace, F_trace).ravel()
-    p = pm.invlogit(sp_sub)#*facs
-    n = survey_plan.n.astype('int')
-    return pm.rbinomial(n, p)
-    
-def survey_likelihood(sp_sub, survey_plan, data, i):
-    """
-    This function should return the log of the likelihood of data[i]
-    given row i of survey_plan and each element of sp_sub. It must
-    be normalized, because the evidence will be used to avoid difficult
-    computations at low importance weights.
-    """
-    # The function 'binomial' is implemented in the Fortran extension flikelihood.f for speed.
-    l = flikelihood.binomial(data[i], survey_plan.n[i], sp_sub)
-    # Add the normalizing constant and return.
-    return l + gammaln(survey_plan.n[i]+1)-gammaln(data[i]+1)-gammaln(survey_plan.n[i]-data[i]+1)
 
 # Initialize step methods
 def mcmc_init(M):
