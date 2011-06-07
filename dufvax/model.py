@@ -23,7 +23,7 @@ from st_cov_fun import *
 import generic_mbg
 import warnings
 from agecorr import age_corr_likelihoods
-from mbgw import P_trace, S_trace, F_trace, a_pred
+from dufvax import P_trace, S_trace, F_trace, a_pred
 from scipy import interpolate as interp
 import os, cPickle
 from pylab import csv2rec
@@ -67,7 +67,7 @@ else:
     disttol = 0./6378.
     ttol = 0.
 
-def make_model(lon,lat,t,input_data,covariate_keys,pos,neg,lo_age=None,up_age=None,cpus=1,with_stukel=with_stukel, chunk=chunk, disttol=disttol, ttol=ttol):
+def make_model(lon,lat,t,input_data,covariate_keys,pos,neg,lo_age,up_age,duffy,chunk=chunk, disttol=disttol, ttol=ttol):
 
     ra = csv2rec(input_data)
 

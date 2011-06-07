@@ -48,7 +48,7 @@ obs_labels = {'sp_sub': 'eps_p_f'}
 # Extra stuff for predictive ops.
 n_facs = 1000
 
-non_cov_columns = {'lo_age': 'int', 'up_age': 'int', 'pos': 'float', 'neg': 'float'}
+non_cov_columns = {'lo_age': 'int', 'up_age': 'int', 'pos': 'float', 'neg': 'float', 'duffy': 'float'}
 
 # Postprocessing stuff for mapping
 
