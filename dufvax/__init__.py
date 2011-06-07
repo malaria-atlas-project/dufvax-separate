@@ -12,7 +12,6 @@ import tables as tb
 import numpy as np
 import agecorr
 from st_cov_fun import *
-from pr_incidence import BurdenPredictor
 import flikelihood
 from scipy.special import gammaln
 
@@ -34,9 +33,9 @@ from generic_mbg import invlogit, histogram_reduce
 from pymc import thread_partition_array
 from pymc.gp import GPEvaluationGibbs
 import pymc as pm
-import mbgw
+import dufvax
 import os
-root = os.path.split(mbgw.__file__)[0]
+root = os.path.split(dufvax.__file__)[0]
 pm.gp.cov_funs.cov_utils.mod_search_path.append(root)
 
 def check_data(input):
@@ -56,27 +55,6 @@ def pr(sp_sub, two_ten_facs=two_ten_factors):
     pr = sp_sub.copy('F')
     pr = invlogit(pr) * two_ten_facs[np.random.randint(len(two_ten_facs))]
     return pr
-
-N_year = 1./12
-xplot = np.linspace(0.001,1,100)
-xplot_aug = np.concatenate(([0],xplot))
-def incidence(sp_sub, 
-                two_ten_facs=two_ten_factors,
-                p2b = BurdenPredictor('Africa+_scale_0.6_model_exp.hdf5', N_year),
-                N_year = N_year):
-    pr = sp_sub.copy('F')
-    pr = invlogit(pr) * two_ten_facs[np.random.randint(len(two_ten_facs))]
-    i = np.random.randint(len(p2b.f))
-    mu = p2b.f[i](pr)
-    
-    # Uncomment and draw a negative binomial variate to get incidence over a finite time horizon.
-    r = (p2b.r_int[i] + p2b.r_lin[i] * pr + p2b.r_quad[i] * pr**2)
-    ar = pm.rgamma(beta=r/mu, alpha=r*N_year)
-
-    out = (1-np.exp(-ar))
-    out[np.where(out==0)]=1e-10
-    out[np.where(out==1)]=1-(1e-10)
-    return out
 
 #map_postproc = [pr]+map(unexposed_risk_, [.001, .01, .1, 1.])
 # NOTE: You must multiply all the maps by 1-duffy post-hoc.
@@ -112,7 +90,7 @@ def bin_finalize(products, n, bins_list=bins_list, bin_reduce_list=bin_reduce_li
 extra_reduce_fns = bin_reduce_list
 extra_finalize = bin_finalize
 
-metadata_keys = ['ti','fi','ui','with_stukel','chunk','disttol','ttol']
+metadata_keys = ['ti','fi','ui','chunk','disttol','ttol']
 
 # Postprocessing stuff for validation
 

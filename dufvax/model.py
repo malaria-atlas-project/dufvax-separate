@@ -91,7 +91,7 @@ def make_model(lon,lat,t,input_data,covariate_keys,pos,neg,lo_age,up_age,duffy,c
     
     init_OK = False
     while not init_OK:
-        @pm.deterministic()
+        @pm.deterministic(trace=False)
         def M():
             return pm.gp.Mean(pm.gp.zero_fn)
     
@@ -151,7 +151,7 @@ def make_model(lon,lat,t,input_data,covariate_keys,pos,neg,lo_age,up_age,duffy,c
                     return 0.
 
             # A Deterministic valued as a Covariance object. Uses covariance my_st, defined above. 
-            @pm.deterministic
+            @pm.deterministic(trace=False)
             def C(amp=amp,scale=scale,inc=inc,ecc=ecc,scale_t=scale_t, t_lim_corr=t_lim_corr, sin_frac=sin_frac, ra=ra):
                 eval_fun = CovarianceWithCovariates(my_st, input_data, covariate_keys, ui, fac=1.e4, ra=ra)
                 return pm.gp.FullRankCovariance(eval_fun, amp=amp, scale=scale, inc=inc, ecc=ecc, st=scale_t, sd=.5,
@@ -159,7 +159,7 @@ def make_model(lon,lat,t,input_data,covariate_keys,pos,neg,lo_age,up_age,duffy,c
             
             # assert(np.all(C.value.eval_fun.meshes[0]==logp_mesh[:,:2]))
                                                 
-            sp_sub = pm.gp.GPSubmodel('sp_sub',M,C,logp_mesh)
+            sp_sub = pm.gp.GPSubmodel('sp_sub',M,C,logp_mesh,tally_f=False)
             
             init_OK = True
         except pm.ZeroProbability, msg:
