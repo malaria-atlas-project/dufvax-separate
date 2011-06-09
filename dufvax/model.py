@@ -99,8 +99,6 @@ def make_model(lon,lat,t,input_data,covariate_keys,pos,neg,lo_age,up_age,duffy,c
         tau = pm.Gamma('tau', alpha=3, beta=3/.25, value=5)
         V = pm.Lambda('V', lambda tau=tau:1./tau)
         # V = pm.Exponential('V', .1, value=1.)
-    
-        vars_to_writeout = ['V', 'm_const', 't_coef']
         
         # Lock down parameters of Stukel's link function to obtain standard logit.
         # These can be freed by removing 'observed' flags, but mixing gets much worse.
@@ -136,8 +134,6 @@ def make_model(lon,lat,t,input_data,covariate_keys,pos,neg,lo_age,up_age,duffy,c
 
         # # Uniform prior on sinusoidal fraction in temporal variogram
         sin_frac = pm.Uniform('sin_frac',0,1,value=.01)
-        
-        vars_to_writeout.extend(['inc','ecc','amp','scale','scale_t','t_lim_corr','sin_frac'])
     
         # Create covariance and MV-normal F if model is spatial.   
         try:
