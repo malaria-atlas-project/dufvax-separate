@@ -113,7 +113,8 @@ def make_model(lon,lat,t,input_data,covariate_keys,pos,neg,lo_age,up_age,duffy,c
 
         # Use a uniform prior on sqrt ecc (sqrt ???). Using a uniform prior on ecc itself put too little
         # probability mass on appreciable levels of anisotropy.
-        sqrt_ecc = pm.Uniform('sqrt_ecc', value=.1, lower=0., upper=1.)
+        # sqrt_ecc = pm.Uniform('sqrt_ecc', value=.1, lower=0., upper=1.)
+        sqrt_ecc = 0
         ecc = pm.Lambda('ecc', lambda s=sqrt_ecc: s**2)
 
         # Subjective skew-normal prior on amp (the partial sill, tau) in log-space.
