@@ -16,8 +16,8 @@ import flikelihood
 from scipy.special import gammaln
 
 a_pred = np.hstack((np.arange(15), np.arange(15,75,5), [100]))
-age_pr_file = tb.openFile('age/pr-falciparum')
-age_dist_file = tb.openFile('age/age-dist-falciparum')
+age_pr_file = tb.openFile('../age/pr-falciparum')
+age_dist_file = tb.openFile('../age/age-dist-falciparum')
 
 age_pr_trace = age_pr_file.root.chain0.PyMCsamples.cols
 age_dist_trace = age_dist_file.root.chain0.PyMCsamples.cols
@@ -28,6 +28,7 @@ age_pr_file.close()
 age_dist_file.close()
 
 two_ten_factors = agecorr.age_corr_factors_from_limits(2, 10, 10000, a_pred, P_trace, S_trace, F_trace)
+all_age_factors = agecorr.age_corr_factors_from_limits(1, 99, 10000, a_pred, P_trace, S_trace, F_trace)
 
 from generic_mbg import invlogit, histogram_reduce
 from pymc import thread_partition_array
@@ -51,14 +52,19 @@ non_cov_columns = {'lo_age': 'int', 'up_age': 'int', 'pos': 'float', 'neg': 'flo
 
 # Postprocessing stuff for mapping
 
-def pr(sp_sub, two_ten_facs=two_ten_factors):
+def pr2_10(sp_sub, two_ten_facs=two_ten_factors):
     pr = sp_sub.copy('F')
     pr = invlogit(pr) * two_ten_facs[np.random.randint(len(two_ten_facs))]
     return pr
 
+def pr1_99(sp_sub, all_age_facs=all_age_factors):
+    pr = sp_sub.copy('F')
+    pr = invlogit(pr) * all_age_facs[np.random.randint(len(all_age_facs))]
+    return pr
+
 #map_postproc = [pr]+map(unexposed_risk_, [.001, .01, .1, 1.])
 # NOTE: You must multiply all the maps by 1-duffy post-hoc.
-map_postproc=[pr]
+map_postproc=[pr2_10, pr1_99]
 
 # bins_list = [np.array([0,.1,.5,.75,1]),np.array([0,.05,.4,1]),np.array([0,.01,.05,.4,1])]
 bins_list = [np.array([0,.01,1.])]

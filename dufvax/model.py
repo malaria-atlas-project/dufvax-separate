@@ -96,9 +96,9 @@ def make_model(lon,lat,t,input_data,covariate_keys,pos,neg,lo_age,up_age,duffy,c
             return pm.gp.Mean(pm.gp.zero_fn)
     
         # Inverse-gamma prior on nugget variance V.
-        # tau = pm.Gamma('tau', alpha=3, beta=3/.25, value=5)
+        tau = pm.Gamma('tau', alpha=3, beta=3/.25, value=5)
         V = pm.Lambda('V', lambda tau=tau:1./tau)
-        V = pm.Exponential('V', .1, value=1.)
+        #V = pm.Exponential('V', .1, value=1.)
         
         # Lock down parameters of Stukel's link function to obtain standard logit.
         # These can be freed by removing 'observed' flags, but mixing gets much worse.
