@@ -16,8 +16,8 @@ import flikelihood
 from scipy.special import gammaln
 
 a_pred = np.hstack((np.arange(15), np.arange(15,75,5), [100]))
-age_pr_file = tb.openFile('../age/pr-falciparum')
-age_dist_file = tb.openFile('../age/age-dist-falciparum')
+age_pr_file = tb.openFile('../age/pr-vivax')
+age_dist_file = tb.openFile('../age/age-dist-vivax')
 
 age_pr_trace = age_pr_file.root.chain0.PyMCsamples.cols
 age_dist_trace = age_dist_file.root.chain0.PyMCsamples.cols
