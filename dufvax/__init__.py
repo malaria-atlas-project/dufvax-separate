@@ -119,7 +119,7 @@ validate_postproc=[pr]
 
 # Initialize step methods
 def mcmc_init(M):
-    M.use_step_method(GPEvaluationGibbs, M.sp_sub, M.V, M.eps_p_f, ti=M.ti)
+    M.use_step_method(GPEvaluationGibbs, M.sp_sub, M.V, M.eps_p_f_list, ti=M.ti)
     def isscalar(s):
         return (s.dtype != np.dtype('object')) and (np.alen(s.value)==1) and (s not in M.eps_p_f_list)
     scalar_stochastics = filter(isscalar, M.stochastics)
